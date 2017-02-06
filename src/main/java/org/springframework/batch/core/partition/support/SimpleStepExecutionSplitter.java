@@ -177,6 +177,9 @@ public class SimpleStepExecutionSplitter implements StepExecutionSplitter, Initi
 		Map<String, ExecutionContext> contexts = getContexts(stepExecution, gridSize);
 		Set<StepExecution> set = new HashSet<StepExecution>(contexts.size());
 
+		JobInstance jobInstance = stepExecution.getJobExecution().getJobInstance();
+		Collection<StepExecution> allPriorStepExecutions = jobRepository.getStepExecutions(jobInstance);
+
 		for (Entry<String, ExecutionContext> context : contexts.entrySet()) {
 
 			// Make the step execution name unique and repeatable
@@ -184,7 +187,7 @@ public class SimpleStepExecutionSplitter implements StepExecutionSplitter, Initi
 
 			StepExecution currentStepExecution = jobExecution.createStepExecution(stepName);
 
-			boolean startable = getStartable(currentStepExecution, context.getValue());
+			boolean startable = getStartable(currentStepExecution, context.getValue(), allPriorStepExecutions);
 
 			if (startable) {
 				set.add(currentStepExecution);
@@ -238,11 +241,10 @@ public class SimpleStepExecutionSplitter implements StepExecutionSplitter, Initi
 		return result;
 	}
 
-	protected boolean getStartable(StepExecution stepExecution, ExecutionContext context) throws JobExecutionException {
+	protected boolean getStartable(StepExecution stepExecution, ExecutionContext context, Collection<StepExecution> allPriorStepExecutions) throws JobExecutionException {
 
-		JobInstance jobInstance = stepExecution.getJobExecution().getJobInstance();
 		String stepName = stepExecution.getStepName();
-		StepExecution lastStepExecution = jobRepository.getLastStepExecution(jobInstance, stepName);
+		StepExecution lastStepExecution = jobRepository.getLastStepExecution(allPriorStepExecutions, stepName);
 
 		boolean isRestart = (lastStepExecution != null && lastStepExecution.getStatus() != BatchStatus.COMPLETED);
 

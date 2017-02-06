@@ -176,10 +176,23 @@ public interface JobRepository {
     void updateExecutionContext(JobExecution jobExecution);
 
     /**
+     * @return all step executions, from all job executions, for the given job instance.
+     */
+    Collection<StepExecution> getStepExecutions(JobInstance jobInstance);
+
+    /**
      * @param stepName the name of the step execution that might have run.
-     * @return the last execution of step for the given job instance.
+     * @return the last execution of step for the given job instance, null otherwise.
      */
     StepExecution getLastStepExecution(JobInstance jobInstance, String stepName);
+
+    /**
+     *
+     * @param stepName the name of the step execution that might have run.
+     * @param stepExecutions all step executions to filter through
+     * @return the last execution of step inside the list, null otherwise.
+     */
+    StepExecution getLastStepExecution(Collection<StepExecution> stepExecutions, String stepName);
 
     /**
      * @param stepName the name of the step execution that might have run.

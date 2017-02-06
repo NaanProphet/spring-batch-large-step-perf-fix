@@ -7,8 +7,20 @@
 
     <batch:job id="sample-job">
 
-        <batch:step id="largePartitionStep">
+        <batch:step id="largePartitionStep" next="anotherPartitionStep">
             <batch:partition partitioner="simplePartitioner">
+                <batch:step>
+                    <batch:tasklet>
+                        <bean class="com.bitwiseninja.batch.SimpleTasklet"/>
+                    </batch:tasklet>
+                </batch:step>
+
+            </batch:partition>
+
+        </batch:step>
+
+        <batch:step id="anotherPartitionStep">
+            <batch:partition partitioner="smallerPartitioner">
                 <batch:step>
                     <batch:tasklet>
                         <bean class="com.bitwiseninja.batch.SimpleTasklet"/>
@@ -25,10 +37,14 @@
         <property name="gridSize" value="#{jobParameters['GRID.SIZE']}" />
     </bean>
 
+    <bean id="smallerPartitioner" class="com.bitwiseninja.batch.SimplePartitioner" scope="step">
+        <property name="gridSize" value="1000" />
+    </bean>
+
 
     <!-- ==================== SPRING BATCH INFRASTRUCTURE =================== -->
 
-    <jdbc:embedded-database id="dataSource" type="H2"/>
+    <jdbc:embedded-database id="dataSource" type="H2" />
 
     <jdbc:initialize-database>
         <jdbc:script location="classpath:org/springframework/batch/core/schema-h2.sql"/>

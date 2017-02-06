@@ -6,7 +6,7 @@ import java.util.Map;
 
 /**
  * Essentially the same as the default Spring Batch SimplePartitioner
- * but allows for late-binding-injectable grid size. Defaults to 1.
+ * but allows for late-binding of grid size. Defaults to 1.
  */
 public class SimplePartitioner extends org.springframework.batch.core.partition.support.SimplePartitioner {
 

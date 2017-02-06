@@ -5,18 +5,21 @@
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>com.bitwiseninja.batch</groupId>
-    <artifactId>large-step-executions-performance-drain</artifactId>
+    <artifactId>large-step-executions-performance-fix</artifactId>
+    <packaging>pom</packaging>
     <version>1.0-SNAPSHOT</version>
 
     <properties>
-        <maven-compiler-plugin.source>1.7</maven-compiler-plugin.source>
-        <maven-compiler-plugin.target>1.7</maven-compiler-plugin.target>
+        <maven-compiler-plugin.source>1.6</maven-compiler-plugin.source>
+        <maven-compiler-plugin.target>1.6</maven-compiler-plugin.target>
         <maven-compiler-plugin.version>3.6.0</maven-compiler-plugin.version>
-        <spring-batch-core.version>3.0.7.RELEASE</spring-batch-core.version>
+        <spring-batch-core.version>3.0.3.RELEASE</spring-batch-core.version>
         <junit.version>4.12</junit.version>
         <spring-jdbc.version>4.1.6.RELEASE</spring-jdbc.version>
         <slf4j-simple.version>1.7.22</slf4j-simple.version>
         <h2.version>1.4.193</h2.version>
+        <maven-surefire-plugin.version>2.19.1</maven-surefire-plugin.version>
+        <jute.version>1.1.1</jute.version>
     </properties>
 
     <dependencies>
@@ -60,20 +63,47 @@
             <version>${spring-batch-core.version}</version>
             <scope>test</scope>
         </dependency>
+        <dependency>
+            <groupId>com.igormaznitsa</groupId>
+            <artifactId>jute-annotations</artifactId>
+            <version>${jute.version}</version>
+            <scope>test</scope>
+        </dependency>
     </dependencies>
 
     <build>
-    <plugins>
-    <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-compiler-plugin</artifactId>
-        <version>${maven-compiler-plugin.version}</version>
-        <configuration>
-            <source>${maven-compiler-plugin.source}</source>
-            <target>${maven-compiler-plugin.target}</target>
-        </configuration>
-    </plugin>
-    </plugins>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>${maven-compiler-plugin.version}</version>
+                <configuration>
+                    <source>${maven-compiler-plugin.source}</source>
+                    <target>${maven-compiler-plugin.target}</target>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>com.igormaznitsa</groupId>
+                <artifactId>jute</artifactId>
+                <version>${jute.version}</version>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>jute</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <version>${maven-surefire-plugin.version}</version>
+                <configuration>
+                    <!-- disable surefire, since jute will run tests instead -->
+                    <skipTests>true</skipTests>
+                </configuration>
+            </plugin>
+        </plugins>
     </build>
 
 
