@@ -1,27 +1,19 @@
 package com.bitwiseninja.batch;
 
 
-import com.igormaznitsa.jute.annotations.JUteTest;
 import org.junit.Assert;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.batch.core.ExitStatus;
-import org.springframework.batch.core.Job;
 import org.springframework.batch.core.JobExecution;
 import org.springframework.batch.core.JobParameters;
 import org.springframework.batch.core.JobParametersBuilder;
 import org.springframework.batch.test.JobLauncherTestUtils;
-import org.springframework.batch.test.MetaDataInstanceFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
-import org.springframework.util.FileSystemUtils;
 
-import java.io.File;
-import java.net.URL;
-import java.net.URLClassLoader;
 import java.util.Date;
 
 import static org.springframework.test.annotation.DirtiesContext.ClassMode.AFTER_EACH_TEST_METHOD;
@@ -31,7 +23,11 @@ import static org.springframework.test.annotation.DirtiesContext.ClassMode.AFTER
 @DirtiesContext(classMode =  AFTER_EACH_TEST_METHOD)
 public class JobTest {
 
-    public static final long GRID_SIZE = 500L;
+    private static final long GRID_SIZE_FIRST_STEP = 500L;
+    private static final long GRID_SIZE_OUTER_PARTITIONER = 10L;
+    private static final long GRID_SIZE_INNER_PARTITIONER = 500L;
+    private static final long POOL_SIZE_OUTER = 1;
+    private static final long POOL_SIZE_INNER = 10;
 
     @Autowired
     private JobLauncherTestUtils jobLauncherTestUtils;
@@ -39,7 +35,12 @@ public class JobTest {
     private void runJob() throws Exception {
         JobParameters jobParameters = new JobParametersBuilder()
                 .addLong("VERSION", 1L)
-                .addLong("GRID.SIZE", GRID_SIZE, false).toJobParameters();
+                .addLong("grid.size.firstStep", GRID_SIZE_FIRST_STEP)
+                .addLong("grid.size.outerPartitioner", GRID_SIZE_OUTER_PARTITIONER)
+                .addLong("grid.size.innerPartitioner", GRID_SIZE_INNER_PARTITIONER)
+                .addLong("pool.size.outer", POOL_SIZE_OUTER)
+                .addLong("pool.size.inner", POOL_SIZE_INNER)
+                .toJobParameters();
         JobExecution result = jobLauncherTestUtils.launchJob(jobParameters);
         Assert.assertEquals(ExitStatus.COMPLETED, result.getExitStatus());
     }

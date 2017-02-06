@@ -1,45 +1,73 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <beans xmlns="http://www.springframework.org/schema/beans"
        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:batch="http://www.springframework.org/schema/batch"
-       xmlns:jdbc="http://www.springframework.org/schema/jdbc"
-       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd http://www.springframework.org/schema/batch http://www.springframework.org/schema/batch/spring-batch.xsd http://www.springframework.org/schema/jdbc http://www.springframework.org/schema/jdbc/spring-jdbc.xsd">
+       xmlns:jdbc="http://www.springframework.org/schema/jdbc" xmlns:util="http://www.springframework.org/schema/util"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd http://www.springframework.org/schema/batch http://www.springframework.org/schema/batch/spring-batch.xsd http://www.springframework.org/schema/jdbc http://www.springframework.org/schema/jdbc/spring-jdbc.xsd http://www.springframework.org/schema/util http://www.springframework.org/schema/util/spring-util.xsd">
 
 
     <batch:job id="sample-job">
 
-        <batch:step id="largePartitionStep" next="anotherPartitionStep">
-            <batch:partition partitioner="simplePartitioner">
+        <batch:step id="firstStep" next="secondStep">
+            <batch:description>Initial step intended to seed the step execution table with many rows</batch:description>
+            <batch:partition partitioner="firstStepPartitioner">
                 <batch:step>
-                    <batch:tasklet>
-                        <bean class="com.bitwiseninja.batch.SimpleTasklet"/>
-                    </batch:tasklet>
+                    <batch:tasklet ref="simpleTasklet" />
                 </batch:step>
-
             </batch:partition>
-
         </batch:step>
 
-        <batch:step id="anotherPartitionStep">
-            <batch:partition partitioner="smallerPartitioner">
+        <batch:step id="secondStep">
+            <batch:description>Partition-within-a-partition step, intended to create the stress test</batch:description>
+            <batch:partition partitioner="outerPartitioner" >
+                <batch:handler task-executor="taskExecutorOuter" />
                 <batch:step>
-                    <batch:tasklet>
-                        <bean class="com.bitwiseninja.batch.SimpleTasklet"/>
-                    </batch:tasklet>
+                    <batch:partition partitioner="innerPartitioner">
+                        <batch:handler task-executor="taskExecutorInner" />
+                        <batch:step>
+                            <batch:tasklet ref="simpleTasklet" />
+                        </batch:step>
+                    </batch:partition>
                 </batch:step>
-
             </batch:partition>
-
         </batch:step>
+
+        <batch:validator>
+            <bean class="org.springframework.batch.core.job.DefaultJobParametersValidator">
+                <property name="requiredKeys">
+                    <util:list>
+                        <value>grid.size.firstStep</value>
+                        <value>grid.size.outerPartitioner</value>
+                        <value>grid.size.innerPartitioner</value>
+                        <value>pool.size.outer</value>
+                        <value>pool.size.inner</value>
+                    </util:list>
+                </property>
+            </bean>
+        </batch:validator>
 
     </batch:job>
 
-    <bean id="simplePartitioner" class="com.bitwiseninja.batch.SimplePartitioner" scope="step">
-        <property name="gridSize" value="#{jobParameters['GRID.SIZE']}" />
+    <bean id="firstStepPartitioner" class="com.bitwiseninja.batch.SimplePartitioner" scope="step">
+        <property name="gridSize" value="#{jobParameters['grid.size.firstStep']}" />
     </bean>
 
-    <bean id="smallerPartitioner" class="com.bitwiseninja.batch.SimplePartitioner" scope="step">
-        <property name="gridSize" value="1000" />
+    <bean id="outerPartitioner" class="com.bitwiseninja.batch.SimplePartitioner" scope="step">
+        <property name="gridSize" value="#{jobParameters['grid.size.outerPartitioner']}" />
     </bean>
+
+    <bean id="innerPartitioner" class="com.bitwiseninja.batch.SimplePartitioner" scope="step">
+        <property name="gridSize" value="#{jobParameters['grid.size.innerPartitioner']}" />
+    </bean>
+
+    <bean id="taskExecutorOuter" class="org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor" scope="step">
+        <property name="corePoolSize" value="#{jobParameters['pool.size.outer']}" />
+    </bean>
+
+    <bean id="taskExecutorInner" class="org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor" scope="step">
+        <property name="corePoolSize" value="#{jobParameters['pool.size.inner']}" />
+    </bean>
+
+    <bean id="simpleTasklet" class="com.bitwiseninja.batch.SimpleTasklet" scope="step" />
 
 
     <!-- ==================== SPRING BATCH INFRASTRUCTURE =================== -->
