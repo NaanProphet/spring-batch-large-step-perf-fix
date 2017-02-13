@@ -2,8 +2,12 @@ package com.bitwiseninja.batch;
 
 
 import org.junit.Assert;
+import org.junit.FixMethodOrder;
+import org.junit.FixMethodOrder;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.junit.runners.MethodSorters;
 import org.springframework.batch.core.ExitStatus;
 import org.springframework.batch.core.JobExecution;
 import org.springframework.batch.core.JobParameters;
@@ -14,28 +18,37 @@ import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 
-import java.util.Date;
-
 import static org.springframework.test.annotation.DirtiesContext.ClassMode.AFTER_EACH_TEST_METHOD;
 
 @RunWith(SpringJUnit4ClassRunner.class)
 @ContextConfiguration({"classpath:sample-job-context.xml", "classpath:test-context.xml"})
 @DirtiesContext(classMode =  AFTER_EACH_TEST_METHOD)
-public class JobTest {
+@FixMethodOrder(MethodSorters.NAME_ASCENDING)
+public class JobRepositoryStressTest {
 
-    private static final long GRID_SIZE_FIRST_STEP = 500L;
-    private static final long GRID_SIZE_OUTER_PARTITIONER = 10L;
-    private static final long GRID_SIZE_INNER_PARTITIONER = 500L;
+    // create x outer partitions, and run them 1 at time (pool size locked at one)
+    // so we can measure how much it slows down between each step execution split
+    private static final long GRID_SIZE_OUTER_PARTITIONER = 5L;
     private static final long POOL_SIZE_OUTER = 1;
-    private static final long POOL_SIZE_INNER = 10;
+
+    // create 500 sub partitions and run them as fast as possible for a quick test
+    // (because we're only profiling the splitting)
+    private static final long GRID_SIZE_INNER_PARTITIONER = 500L;
+    private static final long POOL_SIZE_INNER = 4;
 
     @Autowired
     private JobLauncherTestUtils jobLauncherTestUtils;
 
-    private void runJob() throws Exception {
+    @Autowired
+    private StepExecutionSplitterProfiler profiler;
+
+    @Test
+    public void runJob() throws Exception {
+
+        long start = System.currentTimeMillis();
+
         JobParameters jobParameters = new JobParametersBuilder()
                 .addLong("VERSION", 1L)
-                .addLong("grid.size.firstStep", GRID_SIZE_FIRST_STEP)
                 .addLong("grid.size.outerPartitioner", GRID_SIZE_OUTER_PARTITIONER)
                 .addLong("grid.size.innerPartitioner", GRID_SIZE_INNER_PARTITIONER)
                 .addLong("pool.size.outer", POOL_SIZE_OUTER)
@@ -43,17 +56,15 @@ public class JobTest {
                 .toJobParameters();
         JobExecution result = jobLauncherTestUtils.launchJob(jobParameters);
         Assert.assertEquals(ExitStatus.COMPLETED, result.getExitStatus());
-    }
-    
-    @Test
-    public void testJob() throws Exception {
-        long start = new Date().getTime();
 
-        // run with compiled src/main/java
-        runJob();
 
-        long end = new Date().getTime();
+        long end = System.currentTimeMillis();
         System.out.println("Test completed in " + (end - start) + " millis");
+
+        for (int i = 0; i < profiler.getProfileTimes().size(); i++) {
+            System.out.println(String.format("Method call %02d took %s \t ms", (i + 1), profiler.getProfileTimes().get(i)));
+        }
+
     }
     
 }

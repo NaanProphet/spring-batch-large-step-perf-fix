@@ -7,27 +7,10 @@
 
     <batch:job id="sample-job">
 
-        <batch:step id="firstStep" next="secondStep">
-            <batch:description>Initial step intended to seed the step execution table with many rows</batch:description>
-            <batch:partition partitioner="firstStepPartitioner">
-                <batch:step>
-                    <batch:tasklet ref="simpleTasklet" />
-                </batch:step>
-            </batch:partition>
-        </batch:step>
-
-        <batch:step id="secondStep">
+        <batch:step id="doublePartitionStep">
             <batch:description>Partition-within-a-partition step, intended to create the stress test</batch:description>
-            <batch:partition partitioner="outerPartitioner" >
+            <batch:partition partitioner="outerPartitioner" step="innerPartitionerStep" >
                 <batch:handler task-executor="taskExecutorOuter" />
-                <batch:step>
-                    <batch:partition partitioner="innerPartitioner">
-                        <batch:handler task-executor="taskExecutorInner" />
-                        <batch:step>
-                            <batch:tasklet ref="simpleTasklet" />
-                        </batch:step>
-                    </batch:partition>
-                </batch:step>
             </batch:partition>
         </batch:step>
 
@@ -35,7 +18,6 @@
             <bean class="org.springframework.batch.core.job.DefaultJobParametersValidator">
                 <property name="requiredKeys">
                     <util:list>
-                        <value>grid.size.firstStep</value>
                         <value>grid.size.outerPartitioner</value>
                         <value>grid.size.innerPartitioner</value>
                         <value>pool.size.outer</value>
@@ -46,6 +28,37 @@
         </batch:validator>
 
     </batch:job>
+
+
+    <bean id="innerPartitionerStep" class="org.springframework.batch.core.partition.support.PartitionStep">
+
+        <description>
+            Verbose creation of the the partitioned step, so that AOP has access to the StepExecutionSplitter
+            bean for profiling
+        </description>
+
+        <property name="partitionHandler">
+            <bean class="org.springframework.batch.core.partition.support.TaskExecutorPartitionHandler">
+                <property name="taskExecutor" ref="taskExecutorInner" />
+                <property name="step">
+                    <batch:step id="simpleTaskletStep">
+                        <batch:tasklet ref="simpleTasklet" />
+                    </batch:step>
+                </property>
+            </bean>
+        </property>
+
+        <property name="stepExecutionSplitter">
+            <bean class="org.springframework.batch.core.partition.support.SimpleStepExecutionSplitter">
+                <property name="partitioner" ref="innerPartitioner" />
+                <property name="jobRepository" ref="jobRepository" />
+                <property name="stepName" value="innerPartitionerStep" />
+            </bean>
+        </property>
+
+        <property name="jobRepository" ref="jobRepository" />
+
+    </bean>
 
     <bean id="firstStepPartitioner" class="com.bitwiseninja.batch.SimplePartitioner" scope="step">
         <property name="gridSize" value="#{jobParameters['grid.size.firstStep']}" />
@@ -73,6 +86,13 @@
     <!-- ==================== SPRING BATCH INFRASTRUCTURE =================== -->
 
     <jdbc:embedded-database id="dataSource" type="H2" />
+
+    <!--<bean id="dataSource" class="org.springframework.jdbc.datasource.SingleConnectionDataSource">-->
+    <!--<property name="driverClassName" value="org.h2.Driver" />-->
+    <!--<property name="url" value="jdbc:h2:tcp://localhost/~/test" />-->
+    <!--<property name="username" value="SA" />-->
+    <!--<property name="password" value="" />-->
+    <!--</bean>-->
 
     <jdbc:initialize-database>
         <jdbc:script location="classpath:org/springframework/batch/core/schema-h2.sql"/>
