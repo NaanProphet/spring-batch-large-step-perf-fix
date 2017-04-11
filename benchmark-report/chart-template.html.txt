@@ -1,0 +1,36 @@
+<head>
+	<script src="plotly-latest.min.js"></script>
+</head>
+
+<body>
+	<div id="splitterTimes" style="width:800px;height:600px;"></div>
+	<script>
+	var trace1 = {
+	  x: [traceX],
+	  y: [UnpatchedJobRepositoryTest],
+	  mode: 'markers',
+	  type: 'bar',
+		  name: 'Original'
+	};
+	
+	var trace2 = {
+	  x: [traceX],
+	  y: [PatchedJobRepositoryTest],
+	  mode: 'markers',
+	  type: 'bar',
+		  name: 'Improved'
+	};
+
+
+	var data = [trace1, trace2];
+	
+	var layout = {
+	  title: 'SimpleStepExecutionSplitter#split() Patch Benchmark <br> [timestamp] <br> Improvement factor: [improvementFactor]x',
+		xaxis: { title: 'Method Call Iteration'},
+		yaxis: {title: 'Duration (ms)'}
+	};
+
+	Plotly.newPlot('splitterTimes', data, layout);
+		
+	</script>
+</body>

@@ -6,16 +6,16 @@
 	<div id="splitterTimes" style="width:800px;height:600px;"></div>
 	<script>
 	var trace1 = {
-	  x: [1, 2, 3, 4, 5],
-	  y: [1381,2996,7475,10195,17866],
+	  x: [ 1, 2, 3, 4, 5, ],
+	  y: [884, 2286, 5366, 10118, 17944],
 	  mode: 'markers',
 	  type: 'bar',
 		  name: 'Original'
 	};
 	
 	var trace2 = {
-	  x: [1, 2, 3, 4, 5],
-	  y: [586,262,315,329,479],
+	  x: [ 1, 2, 3, 4, 5, ],
+	  y: [462, 206, 282, 193, 228],
 	  mode: 'markers',
 	  type: 'bar',
 		  name: 'Improved'
@@ -25,7 +25,7 @@
 	var data = [trace1, trace2];
 	
 	var layout = {
-	  title: 'SimpleStepExecutionSplitter#split() Performance Benchmark',
+	  title: 'SimpleStepExecutionSplitter#split() Patch Benchmark <br> Apr 11, 2017 5:20:06 PM <br> Improvement factor: 26x',
 		xaxis: { title: 'Method Call Iteration'},
 		yaxis: {title: 'Duration (ms)'}
 	};

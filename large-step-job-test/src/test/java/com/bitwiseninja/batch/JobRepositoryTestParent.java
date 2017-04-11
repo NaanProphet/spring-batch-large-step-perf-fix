@@ -3,8 +3,6 @@ package com.bitwiseninja.batch;
 
 import org.junit.Assert;
 import org.junit.FixMethodOrder;
-import org.junit.FixMethodOrder;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.MethodSorters;
@@ -24,11 +22,11 @@ import static org.springframework.test.annotation.DirtiesContext.ClassMode.AFTER
 @ContextConfiguration({"classpath:sample-job-context.xml", "classpath:test-context.xml"})
 @DirtiesContext(classMode =  AFTER_EACH_TEST_METHOD)
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
-public class JobRepositoryStressTest {
+public abstract class JobRepositoryTestParent {
 
     // create x outer partitions, and run them 1 at time (pool size locked at one)
     // so we can measure how much it slows down between each step execution split
-    private static final long GRID_SIZE_OUTER_PARTITIONER = 5L;
+    static final long GRID_SIZE_OUTER_PARTITIONER = 5L;
     private static final long POOL_SIZE_OUTER = 1;
 
     // create 500 sub partitions and run them as fast as possible for a quick test
@@ -61,9 +59,7 @@ public class JobRepositoryStressTest {
         long end = System.currentTimeMillis();
         System.out.println("Test completed in " + (end - start) + " millis");
 
-        for (int i = 0; i < profiler.getProfileTimes().size(); i++) {
-            System.out.println(String.format("Method call %02d took %s \t ms", (i + 1), profiler.getProfileTimes().get(i)));
-        }
+        VerifyBenchmarkIT.saveResults(this.getClass().getSimpleName(), profiler.getProfileTimes());
 
     }
     
